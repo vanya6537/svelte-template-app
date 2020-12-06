@@ -11,21 +11,27 @@ export let items = [];
 // Url to fetch data from
 export let url;
 export let withPagination = false;
-// Url to fetch data from
+// Function to render label for list, passes items as argument
 export let generateLabel;
+// Component for custom rendering
 export let RenderItem = null;
-export let formatItem = (value) => value;
-export let needToFetch;
+// Property name to pass item in RenderItem
 export let renderPropName = 'item';
+// Item modifier function
+export let formatItem = (value) => value;
+// Flag to fetch data from url
+export let needToFetch;
+// Some pagination variables
 export let currentPage = 1;
 export let pageSize = 12;
 export let isLoading;
+// Height of the main component to optimize items per page
 let componentHeight;
-let itemHeight;
-
-// Columns allowed not more than 4
+// Max columns in our list
 export let maxCols = 3;
+// items per page - reactive
 let paginatedItems = [];
+// Main label contains here - reactive
 let label;
 
 async function fetchItems() {
@@ -38,6 +44,7 @@ async function fetchItems() {
   setTimeout(() => (isLoading = false), 500);
 }
 
+// If url passed - we will fetch items on mount
 if (url) {
   isLoading = true;
   onMount(fetchItems);
@@ -58,6 +65,7 @@ afterUpdate(async () => {
 // Reactive label generation if function exists
 $: label = isLoading ? 'Loading...' : (generateLabel && generateLabel(items)) || label || '';
 
+// Pagination is reactive
 $: {
   if (withPagination) {
     paginatedItems = paginate({ items, pageSize, currentPage });
@@ -75,7 +83,7 @@ $: {
     }
   }
 }
-
+// Small optimisation for small screens
 if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
 </script>
 
@@ -92,10 +100,7 @@ if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
     <div>
       <ul role="list" class="list" transition:fade="{{ duration: 1000 }}">
         {#each withPagination ? paginatedItems : items as item}
-          <li
-            class="{cn('list-item', `flex-basis-${Math.min(4, maxCols)}`)}"
-            bind:clientHeight="{itemHeight}"
-          >
+          <li class="{cn('list-item', `flex-basis-${Math.min(4, maxCols)}`)}">
             {#if RenderItem}
               <RenderItem {...{ [renderPropName]: formatItem(item) }} />
             {:else}{formatItem(item)}{/if}
