@@ -17,6 +17,7 @@ let displayOnlyNames = true;
 let timer;
 let needToFetch = false;
 let isLoading = true;
+let withPagination = true;
 // TODO:  Юнит-тесты + комментирование кода + документация Readme на базовом уровне
 
 const generateLabelFunction = (items) => `${items ? items.length : 0} users`;
@@ -68,6 +69,7 @@ const handleUrlChange = ({ target: { value } }) => {
       url="{$urlToFetch}"
       generateLabel="{generateLabelFunction}"
       {...renderItemProps}
+      withPagination
     />
   </div>
 

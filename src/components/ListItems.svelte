@@ -1,20 +1,22 @@
 <!-- components/ListItems.svelte -->
 <script>
+// import Spinner from 'svelte-spinner';
+import fetch from 'node-fetch';
 import { fade } from 'svelte/transition';
 import { paginate, LightPaginationNav } from 'svelte-paginate';
 import cn from 'classnames';
 import { onMount, afterUpdate } from 'svelte';
-import Spinner from 'svelte-spinner';
 // Items that will be in our list
 export let items = [];
 // Url to fetch data from
 export let url;
+export let withPagination = false;
 // Url to fetch data from
 export let generateLabel;
-export let RenderItem;
+export let RenderItem = null;
 export let formatItem = (value) => value;
 export let needToFetch;
-export let renderPropName;
+export let renderPropName = 'item';
 export let currentPage = 1;
 export let pageSize = 12;
 export let isLoading;
@@ -43,7 +45,7 @@ if (url) {
 
 afterUpdate(async () => {
   // If we need - fetch items
-  if (needToFetch) {
+  if (needToFetch && url) {
     isLoading = true;
     await fetchItems();
   }
@@ -54,28 +56,26 @@ afterUpdate(async () => {
 });
 
 // Reactive label generation if function exists
-$: {
-  label = isLoading ? 'Loading...' : (generateLabel && generateLabel(items)) || label || '';
-  paginatedItems = paginate({ items, pageSize, currentPage });
-  if (!paginatedItems.length) currentPage = 1;
-}
+$: label = isLoading ? 'Loading...' : (generateLabel && generateLabel(items)) || label || '';
 
-// Optimization for page height - for best accessibility
 $: {
-  if (
-    componentHeight &&
-    pageSize > 3 &&
-    window.innerWidth > 600 &&
-    componentHeight > window.innerHeight * 3
-  ) {
-    pageSize =
-      Math.floor(Math.max(3, Math.floor((window.innerHeight / componentHeight) * pageSize)) / 3) *
-      3;
+  if (withPagination) {
+    paginatedItems = paginate({ items, pageSize, currentPage });
+
+    // Optimization for page height - for best accessibility
+    if (
+      componentHeight &&
+      pageSize > 3 &&
+      window.innerWidth > 600 &&
+      componentHeight > window.innerHeight * 3
+    ) {
+      pageSize =
+        Math.floor(Math.max(3, Math.floor((window.innerHeight / componentHeight) * pageSize)) / 3) *
+        3;
+    }
   }
 }
-// if (componentHeight && componentHeight < window.innerHeight - 140) {
-//   pageSize = Math.floor(((window.innerHeight / componentHeight) * pageSize) / 3) * 3;
-// }
+
 if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
 </script>
 
@@ -91,7 +91,7 @@ if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
   {#if !isLoading}
     <div>
       <ul role="list" class="list" transition:fade="{{ duration: 1000 }}">
-        {#each paginatedItems as item}
+        {#each withPagination ? paginatedItems : items as item}
           <li
             class="{cn('list-item', `flex-basis-${Math.min(4, maxCols)}`)}"
             bind:clientHeight="{itemHeight}"
@@ -105,18 +105,23 @@ if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
         {/each}
       </ul>
       <!-- Pagination -->
-      <LightPaginationNav
-        totalItems="{items.length}"
-        pageSize="{pageSize}"
-        currentPage="{currentPage}"
-        limit="{1}"
-        showStepOptions="{true}"
-        on:setPage="{(e) => (currentPage = e.detail.page)}"
-      />
+      {#if withPagination}
+        <LightPaginationNav
+          totalItems="{items.length}"
+          pageSize="{pageSize}"
+          currentPage="{currentPage}"
+          limit="{1}"
+          showStepOptions="{true}"
+          on:setPage="{(e) => (currentPage = e.detail.page)}"
+        />
+      {/if}
     </div>
   {:else}
     <div class="spinner-wrapper" out:fade="{{ duration: 1000 }}">
-      <Spinner size="100" speed="750" color="#ba2025" thickness="2" gap="40" />
+      <!--      <Spinner size="100" speed="750" color="#ba2025" thickness="2" gap="40" />-->
+      <div class="svelte-spinner">
+        <p>Data is processing</p>
+      </div>
     </div>
   {/if}
 </div>
@@ -125,7 +130,7 @@ if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
 .list-wrapper {
   float: left;
   width: 100%;
-  overflow: auto;
+  overflow: hidden;
 }
 
 ul {
