@@ -83,6 +83,9 @@ $: {
     }
   }
 }
+if (componentHeight && componentHeight < window.innerHeight - 140) {
+  pageSize = Math.floor(((window.innerHeight / componentHeight) * pageSize) / 3) * 3;
+}
 // Small optimisation for small screens
 if (window.innerWidth < 600) maxCols = Math.max(Math.min(maxCols, 2), 1);
 </script>
