@@ -17,7 +17,7 @@ const onMessageChange = (message, ms) => {
     if (ms > 0)
       timeout = setTimeout(() => {
         visible = false;
-        // alert.set('');
+        alert.set('');
       }, ms);
   }
 };
